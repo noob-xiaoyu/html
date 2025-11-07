@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub 风格文本对比</title>
+    <style>
+        /* --- 基本样式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        /* --- 输入区域布局 --- */
+        .input-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-box h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+            color: #34495e;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* --- 按钮 --- */
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #compare-btn {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+            background-color: #28a745; /* GitHub Green */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #compare-btn:hover {
+            background-color: #218838;
+        }
+
+        /* --- Diff 结果展示区 --- */
+        .diff-container {
+            display: flex;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .diff-pane {
+            flex: 1;
+            display: flex;
+            width: 50%;
+        }
+
+        .diff-pane:first-child {
+            border-right: 1px solid #ddd;
+        }
+
+        .line-numbers {
+            background-color: #f7f7f7;
+            padding: 0 10px;
+            text-align: right;
+            color: #888;
+            user-select: none; /* 禁止选择行号 */
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .code {
+            flex-grow: 1;
+            padding-left: 10px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .line {
+            min-height: 1.5em; /* 确保空行也有高度 */
+            display: block;
+        }
+
+        /* GitHub 风格高亮 */
+        .diff-added { background-color: #e6ffed; }
+        .diff-removed { background-color: #ffeef0; }
+        
+        /* 空白占位行 */
+        .diff-context { background-color: #f1f8ff; }
+
+        /* 行内差异高亮 */
+        .char-added { background-color: #a6f3a6; font-weight: bold; }
+        .char-removed { background-color: #ffd7d5; text-decoration: line-through; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>GitHub 风格文本对比</h1>
+
+        <div class="input-container">
+            <div class="input-box">
+                <h2>原始文本 (Original)</h2>
+                <textarea id="text-a" placeholder="在此处粘贴原始文本..."></textarea>
+            </div>
+            <div class="input-box">
+                <h2>修改后文本 (Modified)</h2>
+                <textarea id="text-b" placeholder="在此处粘贴修改后的文本..."></textarea>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="compare-btn">生成对比 (Generate Diff)</button>
+        </div>
+
+        <div class="result-container">
+            <h2>对比结果</h2>
+            <div class="diff-container">
+                <!-- 左侧面板 -->
+                <div class="diff-pane">
+                    <div class="line-numbers" id="line-numbers-a"></div>
+                    <div class="code" id="code-a"></div>
+                </div>
+                <!-- 右侧面板 -->
+                <div class="diff-pane">
+                    <div class="line-numbers" id="line-numbers-b"></div>
+                    <div class="code" id="code-b"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 jsdiff 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.1.0/diff.min.js"></script>
+
+    <script>
+        document.getElementById('compare-btn').addEventListener('click', generateDiff);
+
+        // 初始化示例文本
+        const textA = document.getElementById('text-a');
+        const textB = document.getElementById('text-b');
+        textA.value = `const person = {
+  name: "John Doe",
+  age: 30,
+  city: "New York"
+};
+
+function greet(user) {
+  console.log("Hello, " + user.name);
+}
+
+// A simple function to add two numbers
+const add = (a, b) => a + b;
+`;
+        textB.value = `const person = {
+  name: "Jane Doe",
+  age: 32,
+  city: "London",
+  country: "UK"
+};
+
+function greet(user) {
+  // Greet the user with a friendly message
+  console.log("Welcome, " + user.name + "!");
+}
+
+const add = (a, b) => {
+  return a + b;
+};
+`;
+
+        function generateDiff() {
+            const oldText = textA.value;
+            const newText = textB.value;
+
+            // 使用 diffLines 进行行对比
+            const diff = Diff.diffLines(oldText, newText);
+
+            // 获取DOM元素
+            const lineNumbersA = document.getElementById('line-numbers-a');
+            const codeA = document.getElementById('code-a');
+            const lineNumbersB = document.getElementById('line-numbers-b');
+            const codeB = document.getElementById('code-b');
+
+            // 清空旧内容
+            lineNumbersA.innerHTML = '';
+            codeA.innerHTML = '';
+            lineNumbersB.innerHTML = '';
+            codeB.innerHTML = '';
+
+            let leftLineNum = 1;
+            let rightLineNum = 1;
+
+            for (let i = 0; i < diff.length; i++) {
+                const part = diff[i];
+                const lines = part.value.replace(/\n$/, '').split('\n');
+
+                if (part.added) {
+                    lines.forEach(line => {
+                        // 左侧添加空白占位行
+                        lineNumbersA.innerHTML += `<div>&nbsp;</div>`;
+                        codeA.innerHTML += `<div class="line diff-context">&nbsp;</div>`;
+                        // 右侧添加绿色新增行
+                        lineNumbersB.innerHTML += `<div>${rightLineNum++}</div>`;
+                        codeB.innerHTML += `<div class="line diff-added">${escapeHtml(line)}</div>`;
+                    });
+                } else if (part.removed) {
+                    // 检查这是否是一个“修改”操作（即后面紧跟着一个 added 部分）
+                    const nextPart = diff[i + 1];
+                    if (nextPart && nextPart.added) {
+                        const removedLines = lines;
+                        const addedLines = nextPart.value.replace(/\n$/, '').split('\n');
+                        
+                        // 处理成对的修改行
+                        const maxLen = Math.max(removedLines.length, addedLines.length);
+                        for(let j = 0; j < maxLen; j++) {
+                            const oldLine = removedLines[j];
+                            const newLine = addedLines[j];
+
+                            if (oldLine !== undefined && newLine !== undefined) {
+                                // 这是一个修改行，进行行内对比
+                                lineNumbersA.innerHTML += `<div>${leftLineNum++}</div>`;
+                                lineNumbersB.innerHTML += `<div>${rightLineNum++}</div>`;
+                                const intraLineDiff = generateIntraLineDiff(oldLine, newLine);
+                                codeA.innerHTML += `<div class="line diff-removed">${intraLineDiff.old}</div>`;
+                                codeB.innerHTML += `<div class="line diff-added">${intraLineDiff.new}</div>`;
+                            } else if (oldLine !== undefined) {
+                                // 仅左侧有，是删除
+                                lineNumbersA.innerHTML += `<div>${leftLineNum++}</div>`;
+                                codeA.innerHTML += `<div class="line diff-removed">${escapeHtml(oldLine)}</div>`;
+                                lineNumbersB.innerHTML += `<div>&nbsp;</div>`;
+                                codeB.innerHTML += `<div class="line diff-context">&nbsp;</div>`;
+                            } else if (newLine !== undefined) {
+                                // 仅右侧有，是增加
+                                lineNumbersA.innerHTML += `<div>&nbsp;</div>`;
+                                codeA.innerHTML += `<div class="line diff-context">&nbsp;</div>`;
+                                lineNumbersB.innerHTML += `<div>${rightLineNum++}</div>`;
+                                codeB.innerHTML += `<div class="line diff-added">${escapeHtml(newLine)}</div>`;
+                            }
+                        }
+                        // 跳过下一个 part，因为它已经被处理了
+                        i++; 
+                    } else {
+                        // 这是一个纯粹的删除操作
+                        lines.forEach(line => {
+                            lineNumbersA.innerHTML += `<div>${leftLineNum++}</div>`;
+                            codeA.innerHTML += `<div class="line diff-removed">${escapeHtml(line)}</div>`;
+                            // 右侧添加空白占位行
+                            lineNumbersB.innerHTML += `<div>&nbsp;</div>`;
+                            codeB.innerHTML += `<div class="line diff-context">&nbsp;</div>`;
+                        });
+                    }
+                } else { // 未改变
+                    lines.forEach(line => {
+                        lineNumbersA.innerHTML += `<div>${leftLineNum++}</div>`;
+                        codeA.innerHTML += `<div class="line">${escapeHtml(line)}</div>`;
+                        lineNumbersB.innerHTML += `<div>${rightLineNum++}</div>`;
+                        codeB.innerHTML += `<div class="line">${escapeHtml(line)}</div>`;
+                    });
+                }
+            }
+        }
+        
+        // 生成行内差异
+        function generateIntraLineDiff(oldLine, newLine) {
+            const wordDiff = Diff.diffWords(oldLine, newLine);
+            let oldResult = '';
+            let newResult = '';
+
+            wordDiff.forEach(part => {
+                const escapedValue = escapeHtml(part.value);
+                if (part.added) {
+                    newResult += `<span class="char-added">${escapedValue}</span>`;
+                } else if (part.removed) {
+                    oldResult += `<span class="char-removed">${escapedValue}</span>`;
+                } else {
+                    oldResult += escapedValue;
+                    newResult += escapedValue;
+                }
+            });
+            return { old: oldResult, new: newResult };
+        }
+
+        // HTML转义函数，防止XSS
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        // 页面加载后自动执行一次对比
+        window.onload = generateDiff;
+    </script>
+</body>
+</html>
