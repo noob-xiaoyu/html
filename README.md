@@ -46,7 +46,7 @@
 4.  在 **Build and deployment** 部分，将 **Source** 设置为 **Deploy from a branch**。
 5.  选择你的主分支（通常是 `main` 或 `master`），文件夹保持 `/(root)`。
 6.  点击 **Save**。
-7.  等待几分钟，你的文本对比工具就会部署在 `https://<你的GitHub用户名>.github.io/<你的仓库名>/`。
+7.  等待几分钟，你的文本对比工具就会部署在 `https://noob-xiaoyu.github.io/html/`。
 
 ## 📄 许可证
 
