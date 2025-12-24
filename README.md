@@ -1,7 +1,5 @@
 # GitHub 风格文本对比工具 (GitHub-Style Text Diff Tool)
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-brightgreen.svg)](https://[你的GitHub用户名].github.io/[你的仓库名]/)
-
 一个纯前端、零依赖（除了CDN）的网页工具，用于可视化地对比两段文本之间的差异，并以类似 GitHub 的分栏视图高亮显示增、删、改的内容。
 
 ---
@@ -32,7 +30,7 @@
 
 ## 📖 如何使用
 
-1.  打开 [在线体验链接](https://[你的GitHub用户名].github.io/[你的仓库名]/)。
+1.  打开 [在线体验链接](https://noob-xiaoyu.github.io/html/)。
 2.  在左侧的 “原始文本” 输入框中粘贴你的原始内容。
 3.  在右侧的 “修改后文本” 输入框中粘贴修改后的内容。
 4.  点击 **“生成对比 (Generate Diff)”** 按钮。
